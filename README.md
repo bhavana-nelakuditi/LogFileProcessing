@@ -2,6 +2,14 @@
 ### The goal of this course project is to gain experience with creating a streaming data pipeline with cloud computing technologies by designing and implementing an actor-model service using [Akka](https://akka.io/) that ingests logfile generated data in real time and delivers it via an event-based service called [Kafka](https://kafka.apache.org/) to [Spark](https://spark.apache.org/) for further processing. This is a group project with each group consisting of one to six students. No student can participate in more than one group.
 ### Grade: 20%
 
+### Team members
+
++ Sai Nadkarni (snadka2)
++ Ankit Kumar Singh (asing200)
++ Sebastian Greczek (sgrecz3)
++ Sanchita Kapoor (skapoo22)
++ Bhavana Nelakuditi (bnelak3)
+
 ## Preliminaries
 First things first, if you haven't done so, you must create your account at either [BitBucket](https://bitbucket.org/) or [Github](https://github.com/), which are Git repo management systems. Please make sure that you write your name in your README.md in your repo as it is specified on the class roster. Since it is a large class, please use your UIC email address for communications and avoid emails from other accounts like funnybunny2000@gmail.com.
 
