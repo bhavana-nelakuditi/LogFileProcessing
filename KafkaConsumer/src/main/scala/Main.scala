@@ -9,7 +9,7 @@ import scala.language.postfixOps
 object Main {
 
 	def main(args: Array[String]): Unit = {
-		consumeFromKafka("quickstart-events")
+		consumeFromKafka("logfilescraper")
 	}
 
 	def consumeFromKafka(topic: String) = {
