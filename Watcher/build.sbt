@@ -20,6 +20,7 @@ libraryDependencies ++= Seq(
 	"com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
 	"com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
 	"com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
+	"org.apache.kafka" %% "kafka" % "2.8.1",
 	"net.liftweb" %% "lift-json" % "3.5.0",
 	"ch.qos.logback" % "logback-core" % logbackVersion,
 	"ch.qos.logback" % "logback-classic" % logbackVersion,
