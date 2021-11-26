@@ -7,6 +7,8 @@ import scala.collection.Map
 import javax.mail._
 import javax.mail.internet._
 
+import com.typesafe.config.ConfigFactory
+
 
 object SparkLogs {
   def parseLine(line:String): String =
@@ -17,10 +19,14 @@ object SparkLogs {
   }
   def sendEmail(report:Map[String, Long]) =
   {
-    val from = "from@gmail.com"
-    val to = "to@gmail.com"
-    val email = "from@gmail.com"
-    val password = "xxxxxxxxxx"
+
+    val config = ConfigFactory.load("application")
+
+    val from: String = config.getString("MailInput.from")
+    val to: String = config.getString("MailInput.to")
+    val email: String = config.getString("MailInput.email")
+    val password: String = config.getString("MailInput.password")
+
 
     val properties = new Properties()
     properties.put("mail.smtp.auth", "true")
