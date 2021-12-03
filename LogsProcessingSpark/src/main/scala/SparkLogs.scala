@@ -22,9 +22,9 @@ object SparkLogs {
 
     val config = ConfigFactory.load("application")
 
-    val from: String = config.getString("MailInput.from")
-    val to: String = config.getString("MailInput.to")
-    val email: String = config.getString("MailInput.email")
+    val from: String = config.getString("MailInput.email")
+    val to: String = from
+    val email: String = from
     val password: String = config.getString("MailInput.password")
 
 
