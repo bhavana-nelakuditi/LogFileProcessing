@@ -6,50 +6,29 @@ import java.util.Properties
 import scala.collection.Map
 import javax.mail._
 import javax.mail.internet._
-
 import com.typesafe.config.ConfigFactory
+import org.apache.spark
+import Helper._
+import org.apache.spark.sql.SQLContext
+
+import java.util
+import scala.collection.immutable.HashMap
 
 
 object SparkLogs {
-  def parseLine(line:String): String =
+  def generateReport(count:Map[String, Long], start:Long, end:Long,
+                     first5sample: Array[String], last5sample: Array[String]): String =
   {
-    val words = line.split(" ")
-    val logType = words(2)
-    logType
-  }
-  def sendEmail(report:Map[String, Long]) =
-  {
-
-    val config = ConfigFactory.load("application")
-
-    val from: String = config.getString("MailInput.email")
-    val to: String = from
-    val email: String = from
-    val password: String = config.getString("MailInput.password")
-
-
-    val properties = new Properties()
-    properties.put("mail.smtp.auth", "true")
-    properties.put("mail.smtp.starttls.enable", "true")
-    properties.put("mail.smtp.host", "smtp.gmail.com")
-    properties.put("mail.smtp.port", "587")
-
-    val session = Session.getInstance(properties, new Authenticator() {
-        override def getPasswordAuthentication(): PasswordAuthentication =
-        {
-          new PasswordAuthentication(email, password)
-        }
-    })
-
-    val message = new MimeMessage(session)
-    message.setFrom(new InternetAddress(from));
-    message.addRecipient(Message.RecipientType.TO,new InternetAddress(to));
-    message.setSubject("Spark Report");
-    val text = report.toString()
-    message.setText(text);
-    // Send message
-    Transport.send(message);
-    System.out.println("message sent successfully....");
+    val bodyLine1 = "This report is generated for logs between the time frame: "+
+      convertMilliToTime(start) + " --- " + convertMilliToTime(end) + "\n"
+    val bodyLine2 = "There was: "  + count.get("ERROR").get + " ERROR messages\n"
+    val bodyLine3 = "There was: "  + count.get("WARN").get + " WARN messages\n\n\n"
+    val bodyLine4 = "First 5 logs in this time period:\n"
+    val bodyLine5 =  "\n\n\n Last 5 Logs in this time period\n"
+    val first5sampleOfLogs = first5sample.mkString("\n")
+    val last5sampleOfLogs = last5sample.mkString("\n")
+    val body = bodyLine1 + bodyLine2 + bodyLine3 + bodyLine4 + first5sampleOfLogs + bodyLine5 + last5sampleOfLogs
+    body
   }
   def main(args: Array[String]): Unit =
   {
@@ -59,11 +38,27 @@ object SparkLogs {
 
     val lines = sc.textFile("./src/main/resources/test.txt")
 
-    val rdd = lines.map(parseLine)
-    val count = rdd.countByValue()
+    val rddType = lines.map(parseType)
+    val countType = rddType.countByValue()
 
-    count.foreach(println)
-    sendEmail(count)
+    val rddTime = lines.map(parseTime)
+    val start = rddTime.min()
+    val end = rddTime.max()
+
+    val first5sample = lines.take(5)
+    val reversedLastSamples = lines
+      .zipWithIndex()
+      .map({ case (x, y) => (y, x) })
+      .sortByKey(ascending = false)
+      .map({ case (x, y) => y })
+      .take(5)
+
+    val last5Sample = reversedLastSamples.reverse
+
+
+
+
+    sendEmail(generateReport(countType, start, end, first5sample, last5Sample))
   }
 
 
