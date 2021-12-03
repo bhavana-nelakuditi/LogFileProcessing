@@ -23,8 +23,11 @@ object Main {
 		consumer.subscribe(util.Arrays.asList(topic))
 		while (true) {
 			val record = consumer.poll(Duration.ofMillis(2000)).asScala
+			System.out.println(record.isEmpty)
+//			record.isEmpty
 			for (data <- record.iterator)
 				println(data.value())
 		}
+
 	}
 }
