@@ -51,7 +51,7 @@ object Main {
 							// Edge case when it is 23:59 in the log message with overflow minute and hour
 							if(nextMinuteBin == "60" && hourBin == "23") {
 								if(timeBins.contains("23:59-00:00")) {
-									timeBins.update("23:59-00:00", timeBins("23:59-00:00") + "==>" + item)
+									timeBins.update("23:59-00:00", timeBins("23:59-00:00") + "\n" + item)
 									countBins.update("23:59-00:00", countBins("23:59-00:00") + 1)
 								} else {
 									timeBins += ("23:59-00:00" -> item)
@@ -63,7 +63,7 @@ object Main {
 							else if(nextMinuteBin == "60") {
 								val formulated = item.substring(0, 5) + "-" + String.format("%02d", item.substring(0, 2).toInt + 1) + ":00"
 								if(timeBins.contains(formulated)) {
-									timeBins.update(formulated, timeBins(formulated) + "==>" + item)
+									timeBins.update(formulated, timeBins(formulated) + "\n" + item)
 									countBins.update(formulated, countBins(formulated) + 1)
 								} else {
 									timeBins += (formulated -> item)
@@ -73,7 +73,7 @@ object Main {
 							else {
 								val formulated = item.substring(0, 5) + "-" + item.substring(0, 3) + String.format("%02d", item.substring(3, 5).toInt + 1)
 								if(timeBins.contains(formulated)) {
-									timeBins.update(formulated, timeBins(formulated) + "==>" + item)
+									timeBins.update(formulated, timeBins(formulated) + "\n" + item)
 									countBins.update(formulated, countBins(formulated) + 1)
 								} else {
 									timeBins += (formulated -> item)
