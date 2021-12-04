@@ -4,22 +4,18 @@ import org.apache.log4j._
 
 import java.util.Properties
 import scala.collection.Map
-import javax.mail._
-import javax.mail.internet._
-import com.typesafe.config.ConfigFactory
-import org.apache.spark
 import Helper._
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.spark.sql.SQLContext
 
 import java.io.{File, PrintWriter}
 import java.time.Duration
 import java.util
-import scala.collection.immutable.HashMap
 import scala.jdk.CollectionConverters.iterableAsScalaIterableConverter
 
 
 object SparkLogs {
+
+  //Generates String report based on spark processing
   def generateReport(count:Map[String, Long], start:Long, end:Long,
                      first5sample: Array[String], last5sample: Array[String]): String =
   {
@@ -34,9 +30,13 @@ object SparkLogs {
     val body = bodyLine1 + bodyLine2 + bodyLine3 + bodyLine4 + first5sampleOfLogs + bodyLine5 + last5sampleOfLogs
     body
   }
+
   def main(args: Array[String]): Unit =
   {
 
+    val logger = Logger.getLogger("org")
+
+    //Set up kafka and subscribe to logfilescraper topic
     val props = new Properties()
     props.put("bootstrap.servers", "localhost:9092")
     props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
@@ -45,76 +45,70 @@ object SparkLogs {
     props.put("group.id", "consumer-group")
     val consumer: KafkaConsumer[String, String] = new KafkaConsumer[String, String](props)
     consumer.subscribe(util.Arrays.asList("logfilescraper"))
+
+    logger.info("Subscribed to kafka topic")
+
+    //get spark context
+    val sc = new SparkContext("local[*]", "SparkLogs")
+
+    logger.info("retrieved spark context")
+
+    //Run kafka listener
     while (true) {
+
+      //check every 2 seconds for new messages from kafka
       val record = consumer.poll(Duration.ofMillis(2000)).asScala
-//      System.out.println(record.isEmpty)
+
+      logger.info("polling for kafka messages")
+
+      //when messages received begin processing
       if(!record.isEmpty) {
 
+        logger.info("kafka message received")
+
+        //write kafka message to file
         val pw = new PrintWriter(new File("kafkatest.txt" ))
         for (data <- record.iterator) {
-//          println(data.value())
           pw.write(data.value())
         }
-//        pw.write(record.)
         pw.close
-        val logger = Logger.getLogger("org")
 
-        val sc = new SparkContext("local[*]", "SparkLogs")
+        logger.info("kafka message written to file")
 
+        logger.info("beginning spark processing")
+
+        //create rdd from file
         val lines = sc.textFile("kafkatest.txt")
 
+        //get number of error and warn messages
         val rddType = lines.map(parseType)
         val countType = rddType.countByValue()
 
+        //get start and end time of logs
         val rddTime = lines.map(parseTime)
         val start = rddTime.min()
         val end = rddTime.max()
 
+        //take first 5 logs
         val first5sample = lines.take(5)
+
+        //get last 5 logs
         val reversedLastSamples = lines
             .zipWithIndex()
             .map({ case (x, y) => (y, x) })
             .sortByKey(ascending = false)
             .map({ case (x, y) => y })
             .take(5)
-
         val last5Sample = reversedLastSamples.reverse
 
+        logger.info("spark processing complete")
 
-        System.out.println(lines.take(1)(0))
-        sendEmail(lines.take(1)(0))
-//        sendEmail(generateReport(countType, start, end, first5sample, last5Sample))
+        //generate report and send email to stakeholder
+        sendEmail(generateReport(countType, start, end, first5sample, last5Sample))
+        logger.info("email sent successfully")
       }
-//      for (data <- record.iterator)
-//        println(data.value())
     }
-//    val logger = Logger.getLogger("org")
-//
-//    val sc = new SparkContext("local[*]", "SparkLogs")
-//
-//    val lines = sc.textFile("./src/main/resources/test.txt")
-//
-//    val rddType = lines.map(parseType)
-//    val countType = rddType.countByValue()
-//
-//    val rddTime = lines.map(parseTime)
-//    val start = rddTime.min()
-//    val end = rddTime.max()
-//
-//    val first5sample = lines.take(5)
-//    val reversedLastSamples = lines
-//      .zipWithIndex()
-//      .map({ case (x, y) => (y, x) })
-//      .sortByKey(ascending = false)
-//      .map({ case (x, y) => y })
-//      .take(5)
-//
-//    val last5Sample = reversedLastSamples.reverse
-//
-//
-//
-//
-//    sendEmail(generateReport(countType, start, end, first5sample, last5Sample))
+
   }
 
 
