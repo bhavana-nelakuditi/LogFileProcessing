@@ -111,8 +111,9 @@ object SparkLogs {
         //generate report and send email to stakeholder
         sendEmail(generateReport(countType, start, end, firstnsample, lastnSample))
         logger.info("Email sent successfully")
-        pw.write("")
-        pw.close
+        val deletePrinter = new PrintWriter(new File(appConfig.getString("kafka.outputfile")))
+        deletePrinter.write("")
+        deletePrinter.close
       }
     }
 
