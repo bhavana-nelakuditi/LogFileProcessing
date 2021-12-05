@@ -22,8 +22,8 @@ object Main {
 		final case class IsolatedLogs(logs: String)
 
 		def apply(): Behavior[IsolatedLogs] = Behaviors.receive { (context, message) =>
-			context.log.info("Received message into kafkaSender from msgParser:-")
-			context.log.info(message.logs)
+//			context.log.info("Received message into kafkaSender from msgParser:-")
+//			context.log.info(message.logs)
 
 			val props = new Properties()
 			props.put("bootstrap.servers", appConfig.getString("kafka.host"))
