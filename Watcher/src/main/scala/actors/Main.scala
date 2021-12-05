@@ -2,14 +2,21 @@ package actors
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorSystem, Behavior}
+import com.typesafe.config.{Config, ConfigFactory}
+
 import java.util.Properties
 import org.apache.kafka.clients.producer._
+
 import java.io.File
 import fileutils.{FileAdapter, FileEvent, FileWatcher}
+
 import scala.collection.mutable.Map
 import scala.io.Source
 
 object Main {
+
+	val config: Config = ConfigFactory.load("application.conf")
+	val appConfig = config.getConfig("app")
 
 	object kafkaSender {
 		final case class IsolatedLogs(logs: String)
@@ -19,11 +26,11 @@ object Main {
 			context.log.info(message.logs)
 
 			val props = new Properties()
-			props.put("bootstrap.servers", "localhost:9092")
+			props.put("bootstrap.servers", appConfig.getString("kafka.host"))
 			props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
 			props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
 			val producer = new KafkaProducer[String, String](props)
-			val record = new ProducerRecord[String, String]("logfilescraper", "RetrieveLogs", message.logs)
+			val record = new ProducerRecord[String, String](appConfig.getString("kafka.topic"), appConfig.getString("kafka.key"), message.logs)
 			producer.send(record)
 			producer.close()
 			Behaviors.same
@@ -81,13 +88,10 @@ object Main {
 								}
 							}
 						}
-
-						//						println(item)
 					}
-//					System.out.println(timeBins)
-//					System.out.println(countBins)
+
 					countBins.keys.foreach { i =>
-						if(countBins(i) > 4)
+						if(countBins(i) > appConfig.getInt("thresholdAmount"))
 							sender ! kafkaSender.IsolatedLogs(timeBins(i))
 					}
 					context.log.info("Finished parsing in msgParser")
@@ -101,7 +105,7 @@ object Main {
 
 		def apply(): Behavior[logDir] =
 			Behaviors.setup { context =>
-				val sender = context.spawn(msgParser(), "test")
+				val sender = context.spawn(msgParser(), "WatchFolder")
 
 				Behaviors.receiveMessage { message =>
 
@@ -110,12 +114,13 @@ object Main {
 					watcher.addListener(new FileAdapter() {
 						override def onCreated(event: FileEvent): Unit = {
 							context.log.info("File created " + event.getFile.getName)
+							context.log.info("Sending message to Message Parser")
 							sender ! msgParser.logfile(message.msg + "/" + event.getFile.getName)
 						}
 
 						override def onModified(event: FileEvent): Unit = {
 							context.log.info("File modified " + event.getFile.getName)
-							context.log.info("Sending message to other actor")
+							context.log.info("Sending message to Message Parser")
 							sender ! msgParser.logfile(message.msg + "/" + event.getFile.getName)
 						}
 					}).watch()
@@ -126,10 +131,13 @@ object Main {
 	}
 
 	def main(args: Array[String]): Unit = {
-		val system: ActorSystem[niowatcher.logDir] = ActorSystem(niowatcher(), "test2")
+		val system: ActorSystem[niowatcher.logDir] = ActorSystem(niowatcher(), "MainWatcher")
 
-		system ! niowatcher.logDir("log")
-//		system.terminate()
-//		System.exit(0)
+		system ! niowatcher.logDir(appConfig.getString("watchFolder"))
+
+		Runtime.getRuntime.addShutdownHook(new Thread() {override def run = {
+			println("Terminating actor system through addShutDownHook handler")
+			system.terminate()
+		}})
 	}
 }
