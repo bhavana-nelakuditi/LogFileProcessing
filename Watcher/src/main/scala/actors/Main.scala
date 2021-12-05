@@ -46,7 +46,7 @@ object Main {
 
 				Behaviors.receiveMessage { message =>
 
-					context.log.info("Received message in msgParser")
+//					context.log.info("Received message in msgParser")
 					val timeBins: Map[String, String] = Map()
 					val countBins: Map[String, Int] = Map()
 					val bufferedSource = Source.fromFile(message.msg)
@@ -94,7 +94,7 @@ object Main {
 						if(countBins(i) > appConfig.getInt("thresholdAmount"))
 							sender ! kafkaSender.IsolatedLogs(timeBins(i))
 					}
-					context.log.info("Finished parsing in msgParser")
+//					context.log.info("Finished parsing in msgParser")
 					Behaviors.same
 				}
 			}
