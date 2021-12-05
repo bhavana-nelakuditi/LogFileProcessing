@@ -106,6 +106,8 @@ object SparkLogs {
         //generate report and send email to stakeholder
         sendEmail(generateReport(countType, start, end, first5sample, last5Sample))
         logger.info("email sent successfully")
+        pw.write("")
+        pw.close
       }
     }
 
