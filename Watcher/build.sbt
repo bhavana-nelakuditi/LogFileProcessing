@@ -1,3 +1,4 @@
+
 name := "Watcher"
 
 version := "0.1"
@@ -32,3 +33,9 @@ libraryDependencies ++= Seq(
 	"org.scalatest" %% "scalatest-featurespec" % scalacticVersion % Test,
 	"com.typesafe" % "config" % typesafeConfigVersion
 )
+
+// META-INF discarding
+assemblyMergeStrategy in assembly := {
+	case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+	case x => MergeStrategy.first
+}
