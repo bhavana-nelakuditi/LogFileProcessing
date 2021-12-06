@@ -18,12 +18,12 @@ object Main {
 	val config: Config = ConfigFactory.load("application.conf")
 	val appConfig = config.getConfig("app")
 
+	// This actor is responsible for publishing received messages to the configured Kafka instance
 	object kafkaSender {
 		final case class IsolatedLogs(logs: String)
 
 		def apply(): Behavior[IsolatedLogs] = Behaviors.receive { (context, message) =>
-//			context.log.info("Received message into kafkaSender from msgParser:-")
-//			context.log.info(message.logs)
+			context.log.info("Received message into kafkaSender from msgParser:-")
 
 			val props = new Properties()
 			props.put("bootstrap.servers", appConfig.getString("kafka.host"))
@@ -31,12 +31,16 @@ object Main {
 			props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
 			val producer = new KafkaProducer[String, String](props)
 			val record = new ProducerRecord[String, String](appConfig.getString("kafka.topic"), appConfig.getString("kafka.key"), message.logs)
+
+			//Push message to Kafka and close the producer
 			producer.send(record)
 			producer.close()
 			Behaviors.same
 		}
 	}
 
+	// This actor is responsible for parsing the received log messages and binning it into time windows.
+	// Further, it also counts the ERROR or WARN messages and only forwards them to the KafkaSend actor if they are more than a threshold amount
 	object msgParser {
 		final case class logfile(msg: String)
 
@@ -46,7 +50,9 @@ object Main {
 
 				Behaviors.receiveMessage { message =>
 
-//					context.log.info("Received message in msgParser")
+					context.log.info("Received message in msgParser")
+
+					// Hash maps for processing
 					val timeBins: Map[String, String] = Map()
 					val countBins: Map[String, Int] = Map()
 					val bufferedSource = Source.fromFile(message.msg)
@@ -90,16 +96,18 @@ object Main {
 						}
 					}
 
+					// Look for higher than threshold amount of ERROR or WARN messages
 					countBins.keys.foreach { i =>
 						if(countBins(i) > appConfig.getInt("thresholdAmount"))
 							sender ! kafkaSender.IsolatedLogs(timeBins(i))
 					}
-//					context.log.info("Finished parsing in msgParser")
+					context.log.info("Finished parsing in msgParser")
 					Behaviors.same
 				}
 			}
 	}
 
+	// This actor is responsible for watching a directory using NIO and and alerting the other actor with the modified file details
 	object niowatcher {
 		final case class logDir(msg: String)
 
@@ -109,6 +117,7 @@ object Main {
 
 				Behaviors.receiveMessage { message =>
 
+					// Utility interfaces derived from package fileutils
 					val folder: File = new File(message.msg)
 					val watcher: FileWatcher = new FileWatcher(folder)
 					watcher.addListener(new FileAdapter() {
@@ -133,8 +142,10 @@ object Main {
 	def main(args: Array[String]): Unit = {
 		val system: ActorSystem[niowatcher.logDir] = ActorSystem(niowatcher(), "MainWatcher")
 
+		// Pass directory info which is to be watched for changes/creation
 		system ! niowatcher.logDir(appConfig.getString("watchFolder"))
 
+		// Graceful shutdown
 		Runtime.getRuntime.addShutdownHook(new Thread() {override def run = {
 			println("Terminating actor system through addShutDownHook handler")
 			system.terminate()
