@@ -10,7 +10,7 @@
 
 # Overview Of Pipeline
 
-![pipeline](readmeImgs/Pipeline.png)
+![pipeline](readmeImgs/Pipeline.jpeg)
 
 Our project is distributed across three EC2 instances. One EC2 #1 we have multiple log generators that write to a root log directory. Next, we have the Watcher program that uses ```Java NIO``` to watch for changes in the log directory. Then, we use ``Akka Actor model``  which checks the log messages that we generate and if there is a greater then 4 ERROR or WARN messages, it sends these messages to the kafka cluster.
 
