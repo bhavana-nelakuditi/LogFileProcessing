@@ -1,5 +1,5 @@
 # Course Project
-### Aws Deployment Video:
+### Aws Deployment Video: https://youtu.be/vj4cN4khn8A
 
 ### Team members
 + Sai Nadkarni (snadka2)
