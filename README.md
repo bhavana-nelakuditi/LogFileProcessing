@@ -40,7 +40,7 @@ sbt clean compile test
 sbt clean compile run
 ```
 
-##Kafka
+## Kafka
 + Install Kafka 2.8.1 preferably and unpack it in any directory on your system.
 + For Windows,
 ```
