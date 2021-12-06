@@ -20,11 +20,62 @@ On EC2 #3 we have the our Spark program running. Here we have the spark-shell ru
 
 Sample spark report:
 
-![sparkreport](readmeImgs/sparkreport.png)
+![sparkreport](readmeImgs/sparkreport.PNG)
 
 # How To Run
 
+## Project set up
++ Clone the project or download the repo in a zip format
++ Open a terminal at the root level of the any of the subdirectories
++ To run the test cases (present in the `Watcher` subdirectory only, for ease of execution from one place),
+
+```
+cd Watcher
+sbt clean compile test
+```
+
++ To run any of the other scala subdirectory programs
+
+```
+sbt clean compile run
+```
+
+##Kafka
++ Install Kafka 2.8.1 preferably and unpack it in any directory on your system.
++ For Windows,
+```
+cd <kafkadir>
+bin\windows\zookeeper-server-start.bat config\zookeeper.properties
+```
+Seperate terminal window,
+```
+bin\windows\kafka-server-start.bat config\server.properties
+```
+Seperate terminal window,
+```
+bin\windows\kafka-topics.bat --create --topic logfilescraper --bootstrap-server localhost:9092
+```
++ For Linux,
+```
+cd <kafkadir>
+bin/zookeeper-server-start.sh config\zookeeper.properties
+```
+Seperate terminal window,
+```
+bin/kafka-server-start.sh config\server.properties
+```
+Seperate terminal window,
+```
+bin/kafka-topics.sh --create --topic logfilescraper --bootstrap-server localhost:9092
+```
+
 ## Log Generator and Watcher
-## Kafka 
++ Simply running `sbt clean compile run` after kafka is initialized will start these programs up. 
+
 ## Spark
++ Install Spark for Windows using [this guide](https://phoenixnap.com/kb/install-spark-on-windows-10). For linux, just downloading and unpacking the tgz file will get you running if you have scala and java installed.
++ Navigate to bin folder inside the downloaded spark installation.
++ Run `spark-shell` to get the spark shell and consecutively, the spark context running.
+
 ## LogProcessingSpark
++ Simply running `sbt clean compile run` after spark shell and kafka are initialized will get this program ready
