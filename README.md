@@ -8,6 +8,8 @@
 + Sanchita Kapoor (skapoo22)
 + Bhavana Nelakuditi (bnelak3)
 
+[Full Documentation](Docs/Documentation.pdf)
+
 # Overview Of Pipeline
 
 ![pipeline](readmeImgs/Pipeline.jpeg)
